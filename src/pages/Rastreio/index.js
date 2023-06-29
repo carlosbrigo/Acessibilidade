@@ -14,7 +14,6 @@ export default Rastreio = () => {
   const [opcao3, setOpcao3] = useState('');
   const [opcao4, setOpcao4] = useState('');
   const [opcao5, setOpcao5] = useState('');
-  const [qrCodeData, setQRCodeData] = useState('');
   const [data, setData] = useState('');
   const [count, setCount] = useState(0);
   const [cameraVisivel, setCameraVisivel] = useState(false);
@@ -24,8 +23,6 @@ export default Rastreio = () => {
   const [permissao, setPermissao] = useState(null)
   const [aux, setAux] = useState(1)
   const [auxOpcao, setAuxOpcao] = useState(true);
-  const [auxFala, setAuxFala] = useState(null)
-
 
   const rate = 1.2; // Velocidade
   const pitch = 0.7; // Taxa
@@ -50,8 +47,8 @@ export default Rastreio = () => {
     }
     else if (newCount === 1) {
      Speech.speak('Neste momento esta sendo aberto a câmera, aponte para o Qr e aguarde as instruções', { language: 'pt', rate: rate, pitch: pitch });      
-      //setCameraVisivel(true);
-      buscaDados(1); //Teste apagar
+      setCameraVisivel(true);
+      //buscaDados(1); //Teste apagar
       setNewCount(2);
     }
     else if (newCount === 2) {
