@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import css from '../../css/css';
+import { View, Text, TouchableOpacity, StyleSheet, Vibration } from 'react-native';
 import config from '../../config/config.json';
+import css from '../../css/css';
 import * as Speech from 'expo-speech';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 
@@ -21,8 +21,11 @@ export default Rastreio = () => {
   const [newCount, setNewCount] = useState(0);
   const cameraRef = useRef(null);
   const [qrCodeInvalido, setQRCodeInvalido] = useState(false);
-  const [opcao, setOpcao] = useState(0);
-  const [permissao, setPermissao] = useState(null);
+  const [permissao, setPermissao] = useState(null)
+  const [aux, setAux] = useState(1)
+  const [auxOpcao, setAuxOpcao] = useState(true);
+  const [auxFala, setAuxFala] = useState(null)
+
 
   const rate = 1.2; // Velocidade
   const pitch = 0.7; // Taxa
@@ -42,76 +45,79 @@ export default Rastreio = () => {
 
   const instrucoes = async () => {
     if (newCount === 0) {
-      //Speech.speak('Você está no centro administrativo, há na sua esquerda um totem com um qr code no canto inferior esquerdo, quando localiza-lo clique novamente no centro da sua tela.', { language: 'pt', rate: rate, pitch: pitch });
-      Speech.speak('Oi', { language: 'pt', rate: rate, pitch: pitch });
+      Speech.speak('Você está no centro administrativo, há na sua esquerda um totem com um qr code no canto inferior esquerdo, quando localiza-lo clique novamente no centro da sua tela.', { language: 'pt', rate: rate, pitch: pitch });
       setNewCount(1);
     }
     else if (newCount === 1) {
-      Speech.speak('Oi', { language: 'pt', rate: rate, pitch: pitch });
-      //Speech.speak('Neste momento esta sendo aberto a câmera, aponte para o Qr e aguarde as instruções', { language: 'pt', rate: rate, pitch: pitch });
-      setCameraVisivel(true);
-      setNewCount(2);      
+     Speech.speak('Neste momento esta sendo aberto a câmera, aponte para o Qr e aguarde as instruções', { language: 'pt', rate: rate, pitch: pitch });      
+      //setCameraVisivel(true);
+      buscaDados(1); //Teste apagar
+      setNewCount(2);
     }
-    else if (newCount > 1) {
-    
-    setNewCount(prevCount => prevCount + 1);
-    
-    Speech.speak(newCount.toString(), { language: 'pt', rate: rate, pitch: pitch });
-    console.log(newCount);
+    else if (newCount === 2) {
+      nOpcoes();
     }
   };
 
- const lerQRCode = async ({ data }) => {
-    try {
-      buscaDados(data);
-    } catch (error) {
-      console.log(error);
+  const nOpcoes = () => {
+
+    setAuxOpcao(true);
+
+    if (count >= aux) {
+      setAux(aux + 1);
+      Speech.speak('Opção ' + aux.toString(), { language: 'pt', rate: rate, pitch: pitch });
+      
+    }
+    if (count < aux) {
+      Speech.speak('Opção inválida reiniciando a contagem ', { language: 'pt', rate: rate, pitch: pitch });
+      setAux(0);
+    } 
+
+    if (auxOpcao) {
+      setTimeout(() => {    
+      if(aux === 1){Speech.speak(opcao1.toString(), { language: 'pt', rate: rate, pitch: pitch });}
+      else if(aux === 2){Speech.speak(opcao2.toString(), { language: 'pt', rate: rate, pitch: pitch });}
+      else if(aux === 3){Speech.speak(opcao3.toString(), { language: 'pt', rate: rate, pitch: pitch });}
+      else if(aux === 4){Speech.speak(opcao4.toString(), { language: 'pt', rate: rate, pitch: pitch });}
+      else if(aux === 5){Speech.speak(opcao5.toString(), { language: 'pt', rate: rate, pitch: pitch });}        
+      setAuxOpcao(false);
+      setAux(1);
+      setNewCount(1);  
+    }, 10000);
+      
     }
   };
 
-  const buscaDados = async (qrCode) => {
+const buscaDados = async (qrCode) => {
     try {
       const response = await fetch(`${config.urlRoot}locais/${qrCode}`);
       const jsonData = await response.json();
       setData(jsonData);
+
       if (jsonData) {
         setDescricao(jsonData.descricao);
+        let count = 0;
         setOpcao1(jsonData.opcao1);
         setOpcao2(jsonData.opcao2);
         setOpcao3(jsonData.opcao3);
         setOpcao4(jsonData.opcao4);
         setOpcao5(jsonData.opcao5);
         setQr(jsonData.qr);
-        console.log(qr);
+
+        if (jsonData.opcao1.length > 0) { count = count + 1 }
+        if (jsonData.opcao2.length > 0) { count = count + 1 }
+        if (jsonData.opcao3.length > 0) { count = count + 1 }
+        if (jsonData.opcao4.length > 0) { count = count + 1 }
+        if (jsonData.opcao5.length > 0) { count = count + 1 }
+        setCount(count);
 
         Speech.speak(jsonData.descricao, { language: 'pt', rate: rate, pitch: pitch });
-        console.log(jsonData.descricao);
+
+        //console.log(jsonData.descricao);
         setCameraVisivel(false);
 
+        Speech.speak('Escolha', { language: 'pt', rate: rate, pitch: pitch });
         Speech.speak('Clique no centro da tela a quantidade de vezes conforme sua escolha', { language: 'pt', rate: rate, pitch: pitch });
-        
-        if (newCount === 3) {
-          Speech.speak(jsonData.opcao1, { language: 'pt', rate: rate, pitch: pitch });
-          setNewCount(2);
-        }
-        else if (newCount === 4) {
-          Speech.speak(jsonData.opcao2, { language: 'pt', rate: rate, pitch: pitch });
-          setNewCount(2);
-        }
-        else if (newCount === 5) {
-          console.log("aqui");
-          Speech.speak(jsonData.opcao3, { language: 'pt', rate: rate, pitch: pitch });
-          setNewCount(2);
-        }
-        else if (newCount === 6) {
-          Speech.speak(jsonData.opcao4, { language: 'pt', rate: rate, pitch: pitch });
-          setNewCount(2);
-        }
-        else if (newCount === 7) {
-          Speech.speak(jsonData.opcao5, { language: 'pt', rate: rate, pitch: pitch });
-          setNewCount(2);
-        }      
-
       }
       return jsonData.id;
     } catch (error) {
@@ -119,19 +125,11 @@ export default Rastreio = () => {
       setCameraVisivel(false);
       setNewCount(1);
       instrucoes();
-
-      let erro = true;
-      if (erro) {
-        Speech.speak('Não estou conseguindo ler o Qr Code, clique novamente para reiniciar o processo', { language: 'pt', rate: rate, pitch: pitch });
-        setTimeout(() => {
-          erro = true;
-        }, 3000);
-        erro = false;
-      }
+      Speech.speak('Não estou conseguindo ler o Qr Code, clique novamente para reiniciar o processo', { language: 'pt', rate: rate, pitch: pitch });
     }
-  }; 
+  };
 
-    useEffect(() => {
+  useEffect(() => {
     if (qrCodeInvalido) {
       const timeout = setTimeout(() => {
         setQRCodeInvalido(false);
@@ -148,6 +146,16 @@ export default Rastreio = () => {
         return;
       }
       lerQRCode({ data });
+      console.log(data);
+      Vibration.vibrate();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const lerQRCode = async ({ data }) => {
+    try {
+      buscaDados(data);
     } catch (error) {
       console.log(error);
     }
