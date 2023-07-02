@@ -21,8 +21,11 @@ export default Rastreio = () => {
   const cameraRef = useRef(null);
   const [qrCodeInvalido, setQRCodeInvalido] = useState(false);
   const [permissao, setPermissao] = useState(null)
-  const [aux, setAux] = useState(1)
-  const [auxOpcao, setAuxOpcao] = useState(true);
+  const [aux, setAux] = useState(1);
+  const [auxOpcao, setAuxOpcao] = useState(false);
+  const [time, setTime] = useState(5000);
+  const [chamaFalar, setChamaFalar] = useState(1);
+  const [opcao, setOpcao] = useState('');
 
   const rate = 1.2; // Velocidade
   const pitch = 0.7; // Taxa
@@ -42,50 +45,59 @@ export default Rastreio = () => {
 
   const instrucoes = async () => {
     if (newCount === 0) {
-      Speech.speak('Você está no centro administrativo, há na sua esquerda um totem com um qr code no canto inferior esquerdo, quando localiza-lo clique novamente no centro da sua tela.', { language: 'pt', rate: rate, pitch: pitch });
+      Speech.speak('Você está no hall de entrada, há na sua esquerda um totem com um qr code no canto inferior esquerdo, quando localizar clique novamente no centro da sua tela.', { language: 'pt', rate: rate, pitch: pitch });
       setNewCount(1);
+      setAux(0);
     }
     else if (newCount === 1) {
-     Speech.speak('Neste momento esta sendo aberto a câmera, aponte para o Qr e aguarde as instruções', { language: 'pt', rate: rate, pitch: pitch });      
-      setCameraVisivel(true);
-      //buscaDados(1); //Teste apagar
+      Speech.speak('Neste momento esta sendo aberto a câmera, aponte para o Qr e aguarde as instruções', { language: 'pt', rate: rate, pitch: pitch });
+      //setCameraVisivel(true);
+      buscaDados(1); //Teste apagar
       setNewCount(2);
+      setAux(1);
     }
     else if (newCount === 2) {
-      nOpcoes();
+      if (count >= aux & aux > 0) {
+        setAux(aux + 1);
+        setChamaFalar(chamaFalar + 1);
+        Speech.speak('Opção ' + aux.toString(), { language: 'pt', rate: rate, pitch: pitch });
+        setAuxOpcao(true);
+        console.log('Aux1 :', aux);
+        console.log('chamaFalar :', chamaFalar);
+      }
+      if (count < aux) {
+        Speech.speak('Opção inválida ou não existe uma opção, reiniciando a contagem ', { language: 'pt', rate: rate, pitch: pitch });
+        setAux(1);
+        setTime(5000);
+        setAuxOpcao(false);
+        console.log('Aux Invalido :', aux);
+      }
     }
   };
 
-  const nOpcoes = () => {
-
-    setAuxOpcao(true);
-
-    if (count >= aux) {
-      setAux(aux + 1);
-      Speech.speak('Opção ' + aux.toString(), { language: 'pt', rate: rate, pitch: pitch });
-      
-    }
-    if (count < aux) {
-      Speech.speak('Opção inválida reiniciando a contagem ', { language: 'pt', rate: rate, pitch: pitch });
-      setAux(0);
-    } 
-
+  useEffect(() => {
     if (auxOpcao) {
-      setTimeout(() => {    
-      if(aux === 1){Speech.speak(opcao1.toString(), { language: 'pt', rate: rate, pitch: pitch });}
-      else if(aux === 2){Speech.speak(opcao2.toString(), { language: 'pt', rate: rate, pitch: pitch });}
-      else if(aux === 3){Speech.speak(opcao3.toString(), { language: 'pt', rate: rate, pitch: pitch });}
-      else if(aux === 4){Speech.speak(opcao4.toString(), { language: 'pt', rate: rate, pitch: pitch });}
-      else if(aux === 5){Speech.speak(opcao5.toString(), { language: 'pt', rate: rate, pitch: pitch });}        
-      setAuxOpcao(false);
-      setAux(1);
-      setNewCount(1);  
-    }, 10000);
-      
+      const timeout = setTimeout(() => {         
+        if (chamaFalar === 1) { Speech.speak(opcao1.toString(), { language: 'pt', rate: rate, pitch: pitch }); }
+        if (chamaFalar === 2) { Speech.speak(opcao2.toString(), { language: 'pt', rate: rate, pitch: pitch }); }
+        if (chamaFalar === 3) { Speech.speak(opcao3.toString(), { language: 'pt', rate: rate, pitch: pitch }); }
+        if (chamaFalar === 4) { Speech.speak(opcao4.toString(), { language: 'pt', rate: rate, pitch: pitch }); }
+        if (chamaFalar === 5) { Speech.speak(opcao5.toString(), { language: 'pt', rate: rate, pitch: pitch }); }
+        console.log('opção :', chamaFalar.toString());     
+        console.log('Aux2 :', aux);       
+        
+        setOpcao('');
+        setNewCount(1);
+        setAuxOpcao(false);
+        setChamaFalar(1);
+      }, time);
+      return () => {
+        clearTimeout(timeout);
+      };
     }
-  };
+  }, [chamaFalar]);
 
-const buscaDados = async (qrCode) => {
+  const buscaDados = async (qrCode) => {
     try {
       const response = await fetch(`${config.urlRoot}locais/${qrCode}`);
       const jsonData = await response.json();
@@ -108,13 +120,12 @@ const buscaDados = async (qrCode) => {
         if (jsonData.opcao5.length > 0) { count = count + 1 }
         setCount(count);
 
-        Speech.speak(jsonData.descricao, { language: 'pt', rate: rate, pitch: pitch });
+        //Speech.speak(jsonData.descricao, { language: 'pt', rate: rate, pitch: pitch });
 
-        //console.log(jsonData.descricao);
         setCameraVisivel(false);
+        //Speech.speak('Clique no centro da tela a quantidade de vezes conforme sua escolha', { language: 'pt', rate: rate, pitch: pitch });
+        Speech.speak('Escolher', { language: 'pt', rate: rate, pitch: pitch });
 
-        Speech.speak('Escolha', { language: 'pt', rate: rate, pitch: pitch });
-        Speech.speak('Clique no centro da tela a quantidade de vezes conforme sua escolha', { language: 'pt', rate: rate, pitch: pitch });
       }
       return jsonData.id;
     } catch (error) {

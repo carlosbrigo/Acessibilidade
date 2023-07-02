@@ -9,7 +9,7 @@ export default function App() {
 
   return (
     <NavigationContainer>      
-      <Stack.Navigator initialRouteName='Rastreio'>
+      <Stack.Navigator initialRouteName="Rastreio">
       <Stack.Screen
           name="Rastreio"
           component={Pages.Rastreio}
