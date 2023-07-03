@@ -58,7 +58,7 @@ export default function Locais({ navigation }) {
             return data;
         }
         return data.filter((item) =>
-            item.local.toLowerCase().includes(searchText.toLowerCase())
+        item.qr && item.qr.toLowerCase().includes(searchText.toLowerCase())
         );
     };
 
@@ -145,6 +145,7 @@ export default function Locais({ navigation }) {
     const handleEditLocal = async (item) => {
         setIsFormVisible(true);
         setLocalData({
+            id: item.id || '',
             qr: item.qr || '',
             descricao: item.descricao || '',
             opcao1: item.opcao1 || '',
@@ -172,13 +173,8 @@ export default function Locais({ navigation }) {
         setLocalData({});
     };
 
-    const handleSave = async (item) => {
-        if (localData.local === '') {
-            Alert.alert('Erro ao salvar', 'O campo local deve ser preenchido', [
-                { text: 'OK', style: 'cancel' },
-            ]);
-            return;
-        }
+    const handleSave = async (item) => { 
+        console.log(localData.id);     
         if (localData.qr === '') {
             Alert.alert('Erro ao salvar', 'O campo Qr Code deve ser preenchido', [
                 { text: 'OK', style: 'cancel' },
@@ -193,8 +189,11 @@ export default function Locais({ navigation }) {
         }
         if (localData.id) {
             await handleEditLocal(localData);
-        } else {
+           
+        }  else {
             await handleAddLocal();
+           
+            
         }
         setIsFormVisible(false);
         setLocalData({
@@ -236,13 +235,13 @@ export default function Locais({ navigation }) {
                                     </TouchableOpacity>
                                 </View>
                             ) : null,
-                            item.Opcao1 ? (
+                            item.opcao1 ? (
                                 <View style={[css.actionContainerListar]}>
                                     <TouchableOpacity
                                         style={css.buttonListar}
                                         onPress={() => Opcao1(item)}
                                     >
-                                        <Icon name="list" color="black" size={15} />
+                                    <Icon name="list" color="black" size={15} />
                                     </TouchableOpacity>
                                 </View>
                             ) : null,
@@ -251,7 +250,8 @@ export default function Locais({ navigation }) {
                                     <TouchableOpacity
                                         style={css.buttonListar}
                                         onPress={() => Opcao2(item)}
-                                    ><Icon name="list" color="black" size={15} />
+                                    >
+                                        <Icon name="list" color="black" size={15} />
                                     </TouchableOpacity>
                                 </View>
                             ) : null,

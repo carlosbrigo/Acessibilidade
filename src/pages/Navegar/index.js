@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Vibration } from 'react-native';
 import config from '../../config/config.json';
-import css from '../../css/css';
+import { StatusBar } from 'expo-status-bar';
 import * as Speech from 'expo-speech';
 import { BarCodeScanner } from 'expo-barcode-scanner';
+import { useNavigation } from '@react-navigation/native';
 
-export default Rastreio = () => {
+export default Navegar = () => {
 
   const [qr, setQr] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -26,14 +27,17 @@ export default Rastreio = () => {
   const [time, setTime] = useState(5000);
   const [chamaFalar, setChamaFalar] = useState(1);
   const [opcao, setOpcao] = useState('');
+  const [areaRestrita, setAreaRestrita] = useState(1);
 
   const rate = 1.2; // Velocidade
   const pitch = 0.7; // Taxa
+  const navigation = useNavigation();
 
   useEffect(() => {
     Speech.speak('Bem vindo ao instituto Federal Panambi', { language: 'pt', rate: rate, pitch: pitch });
     Speech.speak('Clique no centro de sua tela para iniciar e aguarde as instruções', { language: 'pt', rate: rate, pitch: pitch });
-    Speech.stop();
+    Speech.stop();  
+  
   }, []);
 
   useEffect(() => {
@@ -44,6 +48,7 @@ export default Rastreio = () => {
   }, []);
 
   const instrucoes = async () => {
+    setAreaRestrita(0);
     if (newCount === 0) {
       Speech.speak('Você está no hall de entrada, há na sua esquerda um totem com um qr code no canto inferior esquerdo, quando localizar clique novamente no centro da sua tela.', { language: 'pt', rate: rate, pitch: pitch });
       setNewCount(1);
@@ -64,6 +69,7 @@ export default Rastreio = () => {
         setAuxOpcao(true);
         console.log('Aux1 :', aux);
         console.log('chamaFalar :', chamaFalar);
+        
       }
       if (count < aux) {
         Speech.speak('Opção inválida ou não existe uma opção, reiniciando a contagem ', { language: 'pt', rate: rate, pitch: pitch });
@@ -77,15 +83,14 @@ export default Rastreio = () => {
 
   useEffect(() => {
     if (auxOpcao) {
-      const timeout = setTimeout(() => {         
+      const timeout = setTimeout(() => {
         if (chamaFalar === 1) { Speech.speak(opcao1.toString(), { language: 'pt', rate: rate, pitch: pitch }); }
         if (chamaFalar === 2) { Speech.speak(opcao2.toString(), { language: 'pt', rate: rate, pitch: pitch }); }
         if (chamaFalar === 3) { Speech.speak(opcao3.toString(), { language: 'pt', rate: rate, pitch: pitch }); }
         if (chamaFalar === 4) { Speech.speak(opcao4.toString(), { language: 'pt', rate: rate, pitch: pitch }); }
         if (chamaFalar === 5) { Speech.speak(opcao5.toString(), { language: 'pt', rate: rate, pitch: pitch }); }
-        console.log('opção :', chamaFalar.toString());     
-        console.log('Aux2 :', aux);       
-        
+        console.log('opção :', chamaFalar.toString());
+        console.log('Aux2 :', aux);
         setOpcao('');
         setNewCount(1);
         setAuxOpcao(false);
@@ -169,8 +174,26 @@ export default Rastreio = () => {
     }
   };
 
+  const btAeaRestrita = () => {
+    setAreaRestrita(areaRestrita + 1);
+    if(areaRestrita === 1){
+    Speech.speak('Você está acessando a area restrita tem certeza que deseja proseguir?', { language: 'pt', rate: rate, pitch: pitch });
+    Speech.speak('Clique varias veses para acessar. Ou clique no centro da tela para navegar.', { language: 'pt', rate: rate, pitch: pitch });
+    }    
+    if (areaRestrita > 2) {
+      Speech.speak('Acessando aguarde', { language: 'pt', rate: rate, pitch: pitch });
+      navigation.navigate('AreaRestrita');
+      setAreaRestrita(0);
+    }
+  };
+
   return (
     <View style={styles.container}>
+       <StatusBar hidden style="inverted" />
+      <TouchableOpacity style={styles.testeButton} onPress={btAeaRestrita}>
+        <Text style={styles.testeButtonText}>Aréa restrita</Text>
+      </TouchableOpacity>
+
       {qrCodeInvalido && (
         <View style={styles.errorMessageContainer}>
           <Text style={styles.errorMessage}>QR Code inválido para este app</Text>
@@ -185,11 +208,13 @@ export default Rastreio = () => {
           />
         </View>
       ) : (
-        <TouchableOpacity style={styles.button} onPress={instrucoes}>
-          <Text style={styles.buttonText}>Instruções</Text>
+
+        <TouchableOpacity style={styles.fullScreenButton} onPress={instrucoes}>
+          <Text style={styles.fullScreenButtonContent}>Instruções</Text>
         </TouchableOpacity>
 
       )}
+
     </View>
   );
 };
@@ -197,8 +222,41 @@ export default Rastreio = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    //justifyContent: 'center',
+    //alignItems: 'center',
+  },
+  testeButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    right: 20,
+    bottom: 20,
+    borderRadius: 20,
+    marginTop: 10,
+    backgroundColor: '#9f9ea0',
     justifyContent: 'center',
     alignItems: 'center',
+    height: 60,
+  },
+  testeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  fullScreenButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    right: 20,
+    bottom: 20,
+    borderRadius: 20,
+    marginTop: 60,
+    backgroundColor: '#5f9ea0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenButtonContent: {
+    color: '#fff',
+    fontSize: 16,
   },
   button: {
     backgroundColor: '#5f9ea0',

@@ -2,11 +2,11 @@
 import AreaRestrita from './AreaRestrita';
 import Home from './Home';
 import Login from './Login';
-import Rastreio from './Rastreio';
+import Navegar from './Navegar';
 
 export default {
     Home,
     Login,
-    Rastreio,
+    Navegar,
     AreaRestrita,       
 };

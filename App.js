@@ -9,10 +9,10 @@ export default function App() {
 
   return (
     <NavigationContainer>      
-      <Stack.Navigator initialRouteName="Rastreio">
+      <Stack.Navigator initialRouteName="Navegar">
       <Stack.Screen
-          name="Rastreio"
-          component={Pages.Rastreio}
+          name="Navegar"
+          component={Pages.Navegar}
           options={{
             headerShown: false,
             title: "Navegar",
